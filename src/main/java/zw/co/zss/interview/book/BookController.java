@@ -20,6 +20,7 @@ import java.util.List;
 @Api(tags = "book")
 @Validated
 public class BookController {
+
     @Autowired
     private BookServiceImpl bookService;
 

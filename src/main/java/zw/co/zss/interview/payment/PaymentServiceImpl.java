@@ -1,15 +1,15 @@
 package zw.co.zss.interview.payment;
 
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import zw.co.zss.interview.payment.dto.TransactionRequest;
+import zw.co.zss.interview.payment.dto.TransactionResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import zw.co.zss.interview.book.Book;
-import zw.co.zss.interview.payment.dto.TransactionRequest;
-import zw.co.zss.interview.payment.dto.TransactionResponse;
 
 import java.util.*;
 
@@ -22,9 +22,6 @@ public class PaymentServiceImpl {
 
     @Value("${payment-gateway.api-key}")
     private String apiKey;
-
-    private List<String> responseCodes;
-
     private final WebClient webClient;
 
     @Autowired
@@ -38,7 +35,6 @@ public class PaymentServiceImpl {
                     httpHeaders.set("Authorization", "Bearer " + apiKey);
                 })
                 .build();
-        setResponseCodes();
     }
 
     // Create & Update
@@ -52,7 +48,7 @@ public class PaymentServiceImpl {
     }
 
     private void setResponseCodes() {
-        responseCodes = new ArrayList<>();
+        List<String> responseCodes = new ArrayList<>();
         responseCodes.add("000");
         responseCodes.add("001");
         responseCodes.add("005");
@@ -61,6 +57,7 @@ public class PaymentServiceImpl {
     }
 
     public TransactionResponse executeTransaction(TransactionRequest transactionRequest) {
+        logger.info(new Gson().toJson(transactionRequest));
         return this.webClient.post()
                 .uri("/api/transaction")
                 .body(Mono.just(transactionRequest), TransactionRequest.class)

@@ -16,10 +16,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Value("${app.username}")
+    @Value("${app.basic-auth.username}")
     private String username;
 
-    @Value("${app.password}")
+    @Value("${app.basic-auth.password}")
     private String password;
 
     private static final String[] AUTH_WHITELIST = {

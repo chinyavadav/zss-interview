@@ -19,6 +19,7 @@ import zw.co.zss.interview.payment.dto.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,13 +28,13 @@ public class BookServiceImpl {
     Logger logger = LoggerFactory.getLogger(BookServiceImpl.class);
 
     @Autowired
-    private BookRepository bookRepository;
+    BookRepository bookRepository;
 
     @Autowired
-    private ModelMapper modelMapper;
+    ModelMapper modelMapper;
 
     @Autowired
-    private PaymentServiceImpl paymentService;
+    PaymentServiceImpl paymentService;
 
     // Create & Update
     public Book saveBook(Book book) {

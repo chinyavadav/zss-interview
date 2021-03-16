@@ -1,10 +1,12 @@
 package zw.co.zss.interview.payment.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 
+import java.util.Date;
 import java.util.HashMap;
 
 @Data
@@ -20,7 +22,8 @@ public class TransactionRequest {
     private double amount;
 
     @CreatedDate
-    private String created;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd’T’HH:mm:ss.SSSZ")
+    private Date created;
 
     @NonNull
     private Card card;

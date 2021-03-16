@@ -4,8 +4,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import zw.co.zss.interview.book.Book;
-import zw.co.zss.interview.book.dto.BookDTO;
 import zw.co.zss.interview.category.dto.CategoryDTO;
 import zw.co.zss.interview.common.ResponseTemplate;
 import zw.co.zss.interview.exception.CustomException;
