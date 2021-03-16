@@ -22,12 +22,6 @@ public class CategoryController {
     @Autowired
     private CategoryServiceImpl categoryService;
 
-    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
-    @ApiOperation(value = "Fetches all Categories", response = ResponseTemplate.class)
-    public ResponseTemplate<List<Category>> getAllCategories() {
-        return categoryService.getCategories();
-    }
-
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     @ApiOperation(value = "Create new Category", response = ResponseTemplate.class)
     public ResponseTemplate<Category> createCategory(@ApiParam("CategoryDTO") @RequestBody CategoryDTO categoryDTO) {

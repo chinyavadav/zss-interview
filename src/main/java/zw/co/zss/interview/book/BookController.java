@@ -9,6 +9,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import zw.co.zss.interview.book.dto.BookDTO;
 import zw.co.zss.interview.book.dto.PurchaseDTO;
+import zw.co.zss.interview.category.Category;
+import zw.co.zss.interview.category.CategoryServiceImpl;
 import zw.co.zss.interview.common.ResponseTemplate;
 import zw.co.zss.interview.payment.Payment;
 
@@ -24,11 +26,21 @@ public class BookController {
     @Autowired
     private BookServiceImpl bookService;
 
+    @Autowired
+    private CategoryServiceImpl categoryService;
+
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @ApiOperation(value = "Fetches all Books", response = ResponseTemplate.class)
     public ResponseTemplate<List<Book>> getAllBooks() {
         return bookService.getBooks();
     }
+
+    @GetMapping(path = "/category", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @ApiOperation(value = "Fetches all Book Categories", response = ResponseTemplate.class)
+    public ResponseTemplate<List<Category>> getAllCategories() {
+        return categoryService.getCategories();
+    }
+
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     @ApiOperation(value = "Create new Book", response = ResponseTemplate.class)

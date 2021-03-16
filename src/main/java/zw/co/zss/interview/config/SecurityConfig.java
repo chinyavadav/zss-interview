@@ -32,12 +32,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             "/swagger-ui.html",
             "/webjars/**",
             // other public endpoints of your API may be appended to this array
-            "/book/purchase",
-            "/book/category/**"
     };
 
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.inMemoryAuthentication()
                 .withUser(username).password(passwordEncoder().encode(password))
                 .authorities("ROLE_USER");
@@ -46,7 +44,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .antMatchers("/securityNone").permitAll()
+                .antMatchers("/book/category/**").permitAll()
+                .antMatchers("/book/purchase").permitAll()
+                // Disallow everything else..
                 .anyRequest().authenticated()
                 .and()
                 .httpBasic();
@@ -54,7 +54,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        // Allow swagger to be accessed without authentication
         web.ignoring().antMatchers(AUTH_WHITELIST);
     }
 
