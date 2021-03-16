@@ -2,7 +2,6 @@ package zw.co.zss.interview.book;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import zw.co.zss.interview.category.Category;
 
 import java.util.List;
 import java.util.Optional;

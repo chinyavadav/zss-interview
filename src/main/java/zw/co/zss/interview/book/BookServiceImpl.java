@@ -1,5 +1,6 @@
 package zw.co.zss.interview.book;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,9 @@ import zw.co.zss.interview.payment.PaymentServiceImpl;
 import zw.co.zss.interview.payment.PaymentStatus;
 import zw.co.zss.interview.payment.dto.*;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -48,6 +52,7 @@ public class BookServiceImpl {
     }
 
 
+    // Create new Book
     public ResponseTemplate<Book> createBook(BookDTO bookDTO) {
         Book existingBook = findBookByISBN(bookDTO.getIsbn());
         if (existingBook == null) {
@@ -58,6 +63,7 @@ public class BookServiceImpl {
         throw new CustomException("Book has Duplicate ISBN!", HttpStatus.CONFLICT);
     }
 
+    // Updates Existing Book
     public ResponseTemplate<Book> updateBook(long bookId, BookDTO bookDTO) {
         Book book = findBookById(bookId);
         if (book != null) {
@@ -68,6 +74,7 @@ public class BookServiceImpl {
         throw new CustomException("Book does not exist!", HttpStatus.NOT_FOUND);
     }
 
+    // Fetches Books by Category
     public ResponseTemplate<List<Book>> getBooks(long categoryId) {
         List<Book> books = bookRepository.findAllByCategory_CategoryId(categoryId);
         if (books.size() > 0) {
@@ -76,11 +83,25 @@ public class BookServiceImpl {
         throw new CustomException("No books found in the category!", HttpStatus.NOT_FOUND);
     }
 
+    // Validates PAN and Masks
+    private String validateAndMaskPan(String pan) {
+        try {
+            Long.parseLong(pan);
+            if (pan.length() == 16) {
+                return pan.substring(0, 5) + "xxxxxx" + pan.substring(12, 15);
+            }
+        } catch (Exception ignore) {
+        }
+        throw new CustomException("PAN must be 16 digit!", HttpStatus.NOT_FOUND);
+    }
+
+
     public ResponseTemplate purchaseBook(PurchaseDTO purchaseDTO) {
         Book book = findBookById(purchaseDTO.getBookId());
         if (book != null) {
             if (book.getQtyInStock() > 0) {
-                Payment payment = new Payment(book, book.getPrice(), purchaseDTO.getEmail(), purchaseDTO.getAddressLine1(), purchaseDTO.getCity());
+                String maskedPan = validateAndMaskPan(purchaseDTO.getPan());
+                Payment payment = new Payment(book, book.getPrice(), maskedPan, purchaseDTO.getEmail(), purchaseDTO.getAddressLine1(), purchaseDTO.getCity());
                 Payment savedPayment = paymentService.savePayment(payment);
 
                 // Prepare Transaction
@@ -88,6 +109,16 @@ public class BookServiceImpl {
                 HashMap<String, Object> additionalData = new HashMap<>();
                 additionalData.put("bookId", book.getBookId());
                 additionalData.put("email", purchaseDTO.getEmail());
+
+
+                // Validate Expiry Date
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                try {
+                    dateFormat.parse(purchaseDTO.getExpiry());
+                } catch (ParseException e) {
+                    throw new CustomException("Card Expiry Date is in wrong format!", HttpStatus.BAD_REQUEST);
+                }
+
                 TransactionRequest transactionRequest = new TransactionRequest(TransactionType.PURCHASE, ExtendedType.NONE, book.getPrice(), new Card(purchaseDTO.getPan(), purchaseDTO.getExpiry()), savedPayment.getPaymentId().toString(), narration, additionalData);
                 TransactionResponse transactionResponse = paymentService.executeTransaction(transactionRequest);
                 if (transactionResponse.getResponseCode().equals("000")) {
@@ -103,6 +134,7 @@ public class BookServiceImpl {
                 }
 
                 savedPayment.setStatus(PaymentStatus.FAILED);
+                savedPayment.setResponseCode(transactionResponse.getResponseCode());
                 paymentService.savePayment(savedPayment);
                 throw new CustomException(String.format("Payment was not successful! Use reference: %s for any queries", savedPayment.getPaymentId()), HttpStatus.EXPECTATION_FAILED);
             }

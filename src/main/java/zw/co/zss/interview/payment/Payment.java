@@ -36,6 +36,10 @@ public class Payment {
 
     @NonNull
     @Column(nullable = false)
+    private String pan;
+
+    @NonNull
+    @Column(nullable = false)
     private String email;
 
     @NonNull
