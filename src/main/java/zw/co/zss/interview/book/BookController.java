@@ -8,7 +8,9 @@ import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import zw.co.zss.interview.book.dto.BookDTO;
+import zw.co.zss.interview.book.dto.PurchaseDTO;
 import zw.co.zss.interview.common.ResponseTemplate;
+import zw.co.zss.interview.payment.Payment;
 
 @RestController
 @RequestMapping("/book")
@@ -27,7 +29,13 @@ public class BookController {
 
     @PutMapping(path = "/{bookId}", consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     @ApiOperation(value = "Updates new Book", response = ResponseTemplate.class)
-    public ResponseTemplate<Book> updateAccount(@ApiParam("UpdateAccountDTO") @RequestBody BookDTO bookDTO, @ApiParam("bookId") @PathVariable long bookId) {
+    public ResponseTemplate<Book> updateBook(@ApiParam("UpdateAccountDTO") @RequestBody BookDTO bookDTO, @ApiParam("bookId") @PathVariable long bookId) {
         return bookService.updateBook(bookId, bookDTO);
+    }
+
+    @PostMapping(path = "/purchase", consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    @ApiOperation(value = "Purchase Book", response = ResponseTemplate.class)
+    public ResponseTemplate<Payment> purchaseBook(@ApiParam("PurchaseDTO") @RequestBody PurchaseDTO purchaseDTO) {
+        return bookService.purchaseBook(purchaseDTO);
     }
 }
