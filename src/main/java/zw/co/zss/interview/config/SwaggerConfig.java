@@ -31,7 +31,6 @@ public class SwaggerConfig {
                 .build()
                 .apiInfo(metadata())
                 .useDefaultResponseMessages(false)
-                .securitySchemes(new ArrayList<>(Arrays.asList(new ApiKey("Bearer %token", "Authorization", "Header"))))
                 .genericModelSubstitutes(Optional.class);
     }
 
