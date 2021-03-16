@@ -2,11 +2,13 @@ package zw.co.zss.interview.category;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import zw.co.zss.interview.book.Book;
 import zw.co.zss.interview.book.dto.BookDTO;
 import zw.co.zss.interview.category.dto.CategoryDTO;
 import zw.co.zss.interview.common.ResponseTemplate;
+import zw.co.zss.interview.exception.CustomException;
 
 @Service
 public class CategoryServiceImpl {
@@ -31,10 +33,19 @@ public class CategoryServiceImpl {
         categoryRepository.delete(category);
     }
 
-
-    public ResponseTemplate<Category> createBook(CategoryDTO categoryDTO) {
+    public ResponseTemplate<Category> createCategory(CategoryDTO categoryDTO) {
         Category category = modelMapper.map(categoryDTO, Category.class);
         Category savedCategory = saveCategory(category);
         return new ResponseTemplate<>("success", "Category successfully added!", savedCategory);
+    }
+
+    public ResponseTemplate<Category> updateCategory(long categoryId, CategoryDTO categoryDTO) {
+        Category category = findCategoryById(categoryId);
+        if (category != null) {
+            category = modelMapper.map(categoryDTO, Category.class);
+            Category savedCategory = saveCategory(category);
+            return new ResponseTemplate<>("success", "Category successfully updated!", savedCategory);
+        }
+        throw new CustomException("Category does not exist!", HttpStatus.NOT_FOUND);
     }
 }

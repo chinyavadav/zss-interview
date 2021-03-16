@@ -27,7 +27,7 @@ public class BookController {
 
     @PutMapping(path = "/{bookId}", consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     @ApiOperation(value = "Updates new Book", response = ResponseTemplate.class)
-    public ResponseTemplate<Book> updateAccount(@ApiParam("UpdateAccountDTO") @RequestBody BookDTO bookDTO,@ApiParam("bookId") @PathVariable long bookId) {
-        return bookService.createBook(bookDTO);
+    public ResponseTemplate<Book> updateAccount(@ApiParam("UpdateAccountDTO") @RequestBody BookDTO bookDTO, @ApiParam("bookId") @PathVariable long bookId) {
+        return bookService.updateBook(bookId, bookDTO);
     }
 }
