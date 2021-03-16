@@ -23,6 +23,12 @@ public class BookController {
     @Autowired
     private BookServiceImpl bookService;
 
+    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
+    @ApiOperation(value = "Fetches all Books", response = ResponseTemplate.class)
+    public ResponseTemplate<List<Book>> getAllBooks() {
+        return bookService.getBooks();
+    }
+
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     @ApiOperation(value = "Create new Book", response = ResponseTemplate.class)
     public ResponseTemplate<Book> createBook(@ApiParam("BookDTO") @RequestBody BookDTO bookDTO) {

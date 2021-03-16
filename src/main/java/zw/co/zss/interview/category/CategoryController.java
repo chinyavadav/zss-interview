@@ -7,10 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import zw.co.zss.interview.category.Category;
-import zw.co.zss.interview.category.CategoryServiceImpl;
+import zw.co.zss.interview.book.Book;
 import zw.co.zss.interview.category.dto.CategoryDTO;
 import zw.co.zss.interview.common.ResponseTemplate;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/category")
@@ -20,6 +21,12 @@ import zw.co.zss.interview.common.ResponseTemplate;
 public class CategoryController {
     @Autowired
     private CategoryServiceImpl categoryService;
+
+    @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
+    @ApiOperation(value = "Fetches all Categories", response = ResponseTemplate.class)
+    public ResponseTemplate<List<Category>> getAllCategories() {
+        return categoryService.getCategories();
+    }
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     @ApiOperation(value = "Create new Category", response = ResponseTemplate.class)

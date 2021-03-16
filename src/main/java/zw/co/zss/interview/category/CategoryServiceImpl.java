@@ -10,6 +10,8 @@ import zw.co.zss.interview.category.dto.CategoryDTO;
 import zw.co.zss.interview.common.ResponseTemplate;
 import zw.co.zss.interview.exception.CustomException;
 
+import java.util.List;
+
 @Service
 public class CategoryServiceImpl {
     @Autowired
@@ -47,5 +49,11 @@ public class CategoryServiceImpl {
             return new ResponseTemplate<>("success", "Category successfully updated!", savedCategory);
         }
         throw new CustomException("Category does not exist!", HttpStatus.NOT_FOUND);
+    }
+
+    // Fetches all Books
+    public ResponseTemplate<List<Category>> getCategories() {
+        List<Category> categories = categoryRepository.findAll();
+        return new ResponseTemplate<>("success", "Categories Found!", categories);
     }
 }

@@ -1,7 +1,9 @@
 package zw.co.zss.interview.book;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.google.gson.Gson;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,10 +21,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 @Service
 public class BookServiceImpl {
+    Logger logger = LoggerFactory.getLogger(BookServiceImpl.class);
+
     @Autowired
     private BookRepository bookRepository;
 
@@ -74,6 +77,12 @@ public class BookServiceImpl {
         throw new CustomException("Book does not exist!", HttpStatus.NOT_FOUND);
     }
 
+    // Fetches all Books
+    public ResponseTemplate<List<Book>> getBooks() {
+        List<Book> books = bookRepository.findAll();
+        return new ResponseTemplate<>("success", "Books Found!", books);
+    }
+
     // Fetches Books by Category
     public ResponseTemplate<List<Book>> getBooks(long categoryId) {
         List<Book> books = bookRepository.findAllByCategory_CategoryId(categoryId);
@@ -110,7 +119,6 @@ public class BookServiceImpl {
                 additionalData.put("bookId", book.getBookId());
                 additionalData.put("email", purchaseDTO.getEmail());
 
-
                 // Validate Expiry Date
                 DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                 try {
@@ -121,16 +129,22 @@ public class BookServiceImpl {
 
                 TransactionRequest transactionRequest = new TransactionRequest(TransactionType.PURCHASE, ExtendedType.NONE, book.getPrice(), new Card(purchaseDTO.getPan(), purchaseDTO.getExpiry()), savedPayment.getPaymentId().toString(), narration, additionalData);
                 TransactionResponse transactionResponse = paymentService.executeTransaction(transactionRequest);
+                logger.info(new Gson().toJson(transactionResponse));
                 if (transactionResponse.getResponseCode().equals("000")) {
-                    // Deduct from Stock
-                    // TODO research concurrency effects on persistence
-                    book.setQtyInStock(book.getQtyInStock() - 1);
-                    saveBook(book);
-                    savedPayment.setStatus(PaymentStatus.SUCCESS);
-                    savedPayment.setResponseCode(transactionResponse.getResponseCode());
-                    Payment updatedPayment = paymentService.savePayment(savedPayment);
-                    // TODO send email notification
-                    return new ResponseTemplate("success", "Purchase was successful", updatedPayment);
+                    try {
+                        // Deduct from Stock
+                        // TODO research concurrency effects on persistence
+                        book.setQtyInStock(book.getQtyInStock() - 1);
+                        saveBook(book);
+                        savedPayment.setStatus(PaymentStatus.SUCCESS);
+                        savedPayment.setResponseCode(transactionResponse.getResponseCode());
+                        Payment updatedPayment = paymentService.savePayment(savedPayment);
+                        // TODO send email notification
+                        return new ResponseTemplate("success", "Purchase was successful", updatedPayment);
+                    } catch (Exception e) {
+                        logger.error("Critical Error, Manually Resolve");
+                        throw new CustomException("An issue occurred with your order!", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
                 }
 
                 savedPayment.setStatus(PaymentStatus.FAILED);
