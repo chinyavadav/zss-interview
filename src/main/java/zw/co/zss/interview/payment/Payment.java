@@ -57,6 +57,9 @@ public class Payment {
     @Column
     private String responseCode;
 
+    @Column
+    private String debitReference;
+
     @CreationTimestamp
     private Date createdAt;
 

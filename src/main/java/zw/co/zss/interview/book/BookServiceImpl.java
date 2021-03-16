@@ -156,6 +156,7 @@ public class BookServiceImpl {
                             saveBook(book);
                             savedPayment.setStatus(PaymentStatus.SUCCESS);
                             savedPayment.setResponseCode(transactionResponse.getResponseCode());
+                            savedPayment.setDebitReference(transactionResponse.getDebitReference());
                             Payment updatedPayment = paymentService.savePayment(savedPayment);
                             // TODO send email notification
                             return new ResponseTemplate("success", "Purchase was successful", updatedPayment);
@@ -166,6 +167,7 @@ public class BookServiceImpl {
                     }
                     savedPayment.setStatus(PaymentStatus.FAILED);
                     savedPayment.setResponseCode(transactionResponse.getResponseCode());
+                    savedPayment.setDebitReference(transactionResponse.getDebitReference());
                     paymentService.savePayment(savedPayment);
                     String message;
                     switch (transactionResponse.getResponseCode()) {
