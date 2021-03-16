@@ -7,6 +7,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import zw.co.zss.interview.payment.dto.TransactionRequest;
+import zw.co.zss.interview.payment.dto.TransactionResponse;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class PaymentServiceImpl {
@@ -18,6 +24,8 @@ public class PaymentServiceImpl {
     @Value("${payment-gateway.api-key}")
     private String apiKey;
 
+    private List<String> responseCodes;
+
     private final WebClient webClient;
 
     public PaymentServiceImpl(WebClient.Builder webClientBuilder) {
@@ -28,23 +36,24 @@ public class PaymentServiceImpl {
                     httpHeaders.set("Authorization", "Bearer " + apiKey);
                 })
                 .build();
+        setResponseCodes();
     }
 
-    public String executeTransaction(TransactionRequest transactionRequest) {
+    private void setResponseCodes() {
+        responseCodes = new ArrayList<>();
+        responseCodes.add("000");
+        responseCodes.add("001");
+        responseCodes.add("005");
+        responseCodes.add("012");
+        responseCodes.add("096");
+    }
+
+    public TransactionResponse executeTransaction(TransactionRequest transactionRequest) {
         return this.webClient.post()
                 .uri("/api/transaction")
                 .body(Mono.just(transactionRequest), TransactionRequest.class)
-                .exchange()
-                .flatMap(clientResponse -> {
-                    if (clientResponse.statusCode().is5xxServerError()) {
-                        clientResponse.body((clientHttpResponse, context) -> {
-                            return clientHttpResponse.getBody();
-                        });
-                        return clientResponse.bodyToMono(String.class);
-                    } else {
-                        return clientResponse.bodyToMono(String.class);
-                    }
-                })
+                .retrieve()
+                .bodyToMono(TransactionResponse.class)
                 .block();
     }
 }
