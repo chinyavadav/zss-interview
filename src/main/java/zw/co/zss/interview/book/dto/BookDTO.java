@@ -8,4 +8,5 @@ public class BookDTO {
     private String title;
     private String description;
     private double price;
+    private long categoryId;
 }
