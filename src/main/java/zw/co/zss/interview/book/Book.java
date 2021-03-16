@@ -21,7 +21,7 @@ public class Book {
 
     @NonNull
     @Column(unique = true, nullable = false)
-    private String isbn;
+    private long isbn;
 
     @NonNull
     @Column(nullable = false)
@@ -34,6 +34,10 @@ public class Book {
     @NonNull
     @Column(nullable = false)
     private double price;
+
+    @NonNull
+    @Column(nullable = false)
+    private long qtyInStock;
 
     @NonNull
     @ManyToOne
