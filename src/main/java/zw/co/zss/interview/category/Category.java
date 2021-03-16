@@ -1,5 +1,6 @@
 package zw.co.zss.interview.category;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -12,7 +13,6 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
-@RequiredArgsConstructor
 @Entity
 @Table
 public class Category {
@@ -20,10 +20,13 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long categoryId;
 
-    @NonNull
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
     private String title;
 
+    @Column
+    private String description;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "category")
     private Set<Book> books;
 

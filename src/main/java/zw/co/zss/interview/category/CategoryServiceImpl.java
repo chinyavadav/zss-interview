@@ -9,6 +9,7 @@ import zw.co.zss.interview.common.ResponseTemplate;
 import zw.co.zss.interview.exception.CustomException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CategoryServiceImpl {
@@ -34,15 +35,19 @@ public class CategoryServiceImpl {
     }
 
     public ResponseTemplate<Category> createCategory(CategoryDTO categoryDTO) {
-        Category category = modelMapper.map(categoryDTO, Category.class);
-        Category savedCategory = saveCategory(category);
-        return new ResponseTemplate<>("success", "Category successfully added!", savedCategory);
+        Optional<Category> optionalCategory = categoryRepository.findByTitle(categoryDTO.getTitle());
+        if (!optionalCategory.isPresent()) {
+            Category category = modelMapper.map(categoryDTO, Category.class);
+            Category savedCategory = saveCategory(category);
+            return new ResponseTemplate<>("success", "Category successfully added!", savedCategory);
+        }
+        throw new CustomException("Category with same title already exists!", HttpStatus.CONFLICT);
     }
 
     public ResponseTemplate<Category> updateCategory(long categoryId, CategoryDTO categoryDTO) {
         Category category = findCategoryById(categoryId);
         if (category != null) {
-            category = modelMapper.map(categoryDTO, Category.class);
+            modelMapper.map(categoryDTO, category);
             Category savedCategory = saveCategory(category);
             return new ResponseTemplate<>("success", "Category successfully updated!", savedCategory);
         }

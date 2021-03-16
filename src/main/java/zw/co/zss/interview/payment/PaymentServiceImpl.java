@@ -22,6 +22,7 @@ public class PaymentServiceImpl {
 
     @Value("${payment-gateway.api-key}")
     private String apiKey;
+
     private final WebClient webClient;
 
     @Autowired
@@ -29,11 +30,6 @@ public class PaymentServiceImpl {
 
     public PaymentServiceImpl(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder
-                .baseUrl(endpoint)
-                .defaultHeaders(httpHeaders -> {
-                    httpHeaders.set("Content-Type", "application/json");
-                    httpHeaders.set("Authorization", "Bearer " + apiKey);
-                })
                 .build();
     }
 
@@ -57,9 +53,12 @@ public class PaymentServiceImpl {
     }
 
     public TransactionResponse executeTransaction(TransactionRequest transactionRequest) {
-        logger.info(new Gson().toJson(transactionRequest));
         return this.webClient.post()
-                .uri("/api/transaction")
+                .uri(endpoint + "/api/transaction")
+                .headers(httpHeaders -> {
+                    httpHeaders.set("Content-Type", "application/json");
+                    httpHeaders.set("Authorization", "Bearer " + apiKey);
+                })
                 .body(Mono.just(transactionRequest), TransactionRequest.class)
                 .retrieve()
                 .bodyToMono(TransactionResponse.class)

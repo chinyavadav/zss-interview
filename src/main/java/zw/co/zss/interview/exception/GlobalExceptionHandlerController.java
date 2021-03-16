@@ -9,7 +9,6 @@ import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -33,11 +32,6 @@ public class GlobalExceptionHandlerController {
     @ExceptionHandler(CustomException.class)
     public void handleCustomException(HttpServletResponse res, CustomException ex) throws IOException {
         res.sendError(ex.getHttpStatus().value(), ex.getMessage());
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public void handleAccessDeniedException(HttpServletResponse res) throws IOException {
-        res.sendError(HttpStatus.FORBIDDEN.value(), "Access denied");
     }
 
     @ExceptionHandler(Exception.class)

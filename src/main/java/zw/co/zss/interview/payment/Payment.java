@@ -54,7 +54,7 @@ public class Payment {
     @Enumerated(value = EnumType.STRING)
     private PaymentStatus status = PaymentStatus.PENDING;
 
-    @Column(nullable = false)
+    @Column
     private String responseCode;
 
     @CreationTimestamp

@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import zw.co.zss.interview.book.dto.BookDTO;
 import zw.co.zss.interview.book.dto.PurchaseDTO;
+import zw.co.zss.interview.category.Category;
+import zw.co.zss.interview.category.CategoryServiceImpl;
 import zw.co.zss.interview.common.ResponseTemplate;
 import zw.co.zss.interview.exception.CustomException;
 import zw.co.zss.interview.payment.Payment;
@@ -29,6 +31,9 @@ public class BookServiceImpl {
 
     @Autowired
     BookRepository bookRepository;
+
+    @Autowired
+    CategoryServiceImpl categoryService;
 
     @Autowired
     ModelMapper modelMapper;
@@ -60,9 +65,13 @@ public class BookServiceImpl {
     public ResponseTemplate<Book> createBook(BookDTO bookDTO) {
         Book existingBook = findBookByISBN(bookDTO.getIsbn());
         if (existingBook == null) {
-            Book book = modelMapper.map(bookDTO, Book.class);
-            Book savedBook = saveBook(book);
-            return new ResponseTemplate<>("success", "Book successfully added!", savedBook);
+            Category category = categoryService.findCategoryById(bookDTO.getCategoryId());
+            if (category != null) {
+                Book book = new Book(bookDTO.getIsbn(), bookDTO.getTitle(), bookDTO.getDescription(), bookDTO.getPrice(), bookDTO.getQtyInStock(), category);
+                Book savedBook = saveBook(book);
+                return new ResponseTemplate<>("success", "Book successfully added!", savedBook);
+            }
+            throw new CustomException("Category does not exist!", HttpStatus.CONFLICT);
         }
         throw new CustomException("Book has Duplicate ISBN!", HttpStatus.CONFLICT);
     }
@@ -71,9 +80,14 @@ public class BookServiceImpl {
     public ResponseTemplate<Book> updateBook(long bookId, BookDTO bookDTO) {
         Book book = findBookById(bookId);
         if (book != null) {
-            book = modelMapper.map(bookDTO, Book.class);
-            Book savedBook = saveBook(book);
-            return new ResponseTemplate<>("success", "Book successfully updated!", savedBook);
+            Category category = categoryService.findCategoryById(bookDTO.getCategoryId());
+            if (category != null) {
+                modelMapper.map(bookDTO, book);
+                book.setCategory(category);
+                Book savedBook = saveBook(book);
+                return new ResponseTemplate<>("success", "Book successfully updated!", savedBook);
+            }
+            throw new CustomException("Category does not exist!", HttpStatus.CONFLICT);
         }
         throw new CustomException("Book does not exist!", HttpStatus.NOT_FOUND);
     }
@@ -98,7 +112,7 @@ public class BookServiceImpl {
         try {
             Long.parseLong(pan);
             if (pan.length() == 16) {
-                return pan.substring(0, 5) + "xxxxxx" + pan.substring(12, 15);
+                return pan.substring(0, 6) + "xxxxxx" + pan.substring(12, 16);
             }
         } catch (Exception ignore) {
         }
@@ -121,37 +135,64 @@ public class BookServiceImpl {
                 additionalData.put("email", purchaseDTO.getEmail());
 
                 // Validate Expiry Date
-                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                 try {
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                     dateFormat.parse(purchaseDTO.getExpiry());
                 } catch (ParseException e) {
                     throw new CustomException("Card Expiry Date is in wrong format!", HttpStatus.BAD_REQUEST);
                 }
 
-                TransactionRequest transactionRequest = new TransactionRequest(TransactionType.PURCHASE, ExtendedType.NONE, book.getPrice(), new Card(purchaseDTO.getPan(), purchaseDTO.getExpiry()), savedPayment.getPaymentId().toString(), narration, additionalData);
-                TransactionResponse transactionResponse = paymentService.executeTransaction(transactionRequest);
-                logger.info(new Gson().toJson(transactionResponse));
-                if (transactionResponse.getResponseCode().equals("000")) {
-                    try {
-                        // Deduct from Stock
-                        // TODO research concurrency effects on persistence
-                        book.setQtyInStock(book.getQtyInStock() - 1);
-                        saveBook(book);
-                        savedPayment.setStatus(PaymentStatus.SUCCESS);
-                        savedPayment.setResponseCode(transactionResponse.getResponseCode());
-                        Payment updatedPayment = paymentService.savePayment(savedPayment);
-                        // TODO send email notification
-                        return new ResponseTemplate("success", "Purchase was successful", updatedPayment);
-                    } catch (Exception e) {
-                        logger.error("Critical Error, Manually Resolve");
-                        throw new CustomException("An issue occurred with your order!", HttpStatus.INTERNAL_SERVER_ERROR);
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                String created = simpleDateFormat.format(new Date());
+                TransactionRequest transactionRequest = new TransactionRequest(TransactionType.PURCHASE, ExtendedType.NONE, book.getPrice(), created, new Card(purchaseDTO.getPan(), purchaseDTO.getExpiry()), savedPayment.getPaymentId().toString(), narration, additionalData);
+                try {
+                    TransactionResponse transactionResponse = paymentService.executeTransaction(transactionRequest);
+                    logger.info(new Gson().toJson(transactionResponse));
+                    if (transactionResponse.getResponseCode().equals("000")) {
+                        try {
+                            // Deduct from Stock
+                            // TODO research concurrency effects on persistence
+                            book.setQtyInStock(book.getQtyInStock() - 1);
+                            saveBook(book);
+                            savedPayment.setStatus(PaymentStatus.SUCCESS);
+                            savedPayment.setResponseCode(transactionResponse.getResponseCode());
+                            Payment updatedPayment = paymentService.savePayment(savedPayment);
+                            // TODO send email notification
+                            return new ResponseTemplate("success", "Purchase was successful", updatedPayment);
+                        } catch (Exception e) {
+                            logger.error("critical error, manually resolve: " + payment.getPaymentId());
+                            throw new CustomException("An issue occurred with your order!", HttpStatus.INTERNAL_SERVER_ERROR);
+                        }
                     }
+                    savedPayment.setStatus(PaymentStatus.FAILED);
+                    savedPayment.setResponseCode(transactionResponse.getResponseCode());
+                    paymentService.savePayment(savedPayment);
+                    String message;
+                    switch (transactionResponse.getResponseCode()) {
+                        case "001":
+                            message = "Error processing payment please contact your bank!";
+                            break;
+                        case "005":
+                            message = "Failed to process your payment! Contact support if funds were deducted!";
+                            break;
+                        case "012":
+                            message = "Failed to process transaction! Please make sure your card number and expiry date are correct!";
+                            break;
+                        case "096":
+                            message = "Error occured while processing your transaction! Contact our support if funds were deducted from your account!";
+                            break;
+                        default:
+                            message = "Payment was not successful!";
+                            break;
+                    }
+                    throw new CustomException(message, HttpStatus.EXPECTATION_FAILED);
+                } catch (Exception e) {
+                    logger.error("critical error, followup: " + payment.getPaymentId());
+                    savedPayment.setStatus(PaymentStatus.FAILED);
+                    paymentService.savePayment(savedPayment);
+                    throw new CustomException("Error occurred while processing your transaction! If funds were deducted contact our support team!", HttpStatus.EXPECTATION_FAILED);
                 }
 
-                savedPayment.setStatus(PaymentStatus.FAILED);
-                savedPayment.setResponseCode(transactionResponse.getResponseCode());
-                paymentService.savePayment(savedPayment);
-                throw new CustomException(String.format("Payment was not successful! Use reference: %s for any queries", savedPayment.getPaymentId()), HttpStatus.EXPECTATION_FAILED);
             }
             throw new CustomException("Book is out of stock!", HttpStatus.EXPECTATION_FAILED);
         }
