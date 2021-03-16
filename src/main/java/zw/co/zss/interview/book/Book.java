@@ -17,12 +17,11 @@ import java.util.Date;
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long accountId;
+    private long bookId;
 
     @NonNull
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
+    @Column(unique = true, nullable = false)
+    private String isbn;
 
     @NonNull
     @Column(nullable = false)
@@ -35,6 +34,11 @@ public class Book {
     @NonNull
     @Column(nullable = false)
     private double price;
+
+    @NonNull
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
     @CreationTimestamp
     private Date createdAt;
