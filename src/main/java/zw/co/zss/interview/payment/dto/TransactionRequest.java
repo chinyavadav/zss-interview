@@ -14,7 +14,7 @@ public class TransactionRequest {
     @NonNull
     private TransactionType type;
     @NonNull
-    private String extendedType;
+    private ExtendedType extendedType;
     @NonNull
     private double amount;
     @CreatedDate
