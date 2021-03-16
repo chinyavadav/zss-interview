@@ -63,6 +63,7 @@ public class BookServiceImpl {
 
     // Create new Book
     public ResponseTemplate<Book> createBook(BookDTO bookDTO) {
+        validateISBN(Long.toString(bookDTO.getIsbn()));
         Book existingBook = findBookByISBN(bookDTO.getIsbn());
         if (existingBook == null) {
             Category category = categoryService.findCategoryById(bookDTO.getCategoryId());
@@ -78,6 +79,7 @@ public class BookServiceImpl {
 
     // Updates Existing Book
     public ResponseTemplate<Book> updateBook(long bookId, BookDTO bookDTO) {
+        validateISBN(Long.toString(bookDTO.getIsbn()));
         Book book = findBookById(bookId);
         if (book != null) {
             Category category = categoryService.findCategoryById(bookDTO.getCategoryId());
@@ -105,6 +107,18 @@ public class BookServiceImpl {
             new ResponseTemplate<>("success", "Books Found!", books);
         }
         throw new CustomException("No books found in the category!", HttpStatus.NOT_FOUND);
+    }
+
+    // Validate ISBN
+    private void validateISBN(String isbn) {
+        try {
+            Long.parseLong(isbn);
+            if (isbn.length() >= 10 && isbn.length() <= 13) {
+                return;
+            }
+        } catch (Exception ignore) {
+        }
+        throw new CustomException("ISBN must be 10 to 13 digits!", HttpStatus.NOT_FOUND);
     }
 
     // Validates PAN and Masks
