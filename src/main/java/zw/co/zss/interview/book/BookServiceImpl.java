@@ -5,8 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import zw.co.zss.interview.book.dto.BookDTO;
+import zw.co.zss.interview.book.dto.PurchaseDTO;
 import zw.co.zss.interview.common.ResponseTemplate;
 import zw.co.zss.interview.exception.CustomException;
+import zw.co.zss.interview.payment.Payment;
+import zw.co.zss.interview.payment.PaymentServiceImpl;
+import zw.co.zss.interview.payment.PaymentStatus;
+import zw.co.zss.interview.payment.dto.*;
+
+import java.util.HashMap;
 
 @Service
 public class BookServiceImpl {
@@ -15,6 +22,9 @@ public class BookServiceImpl {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private PaymentServiceImpl paymentService;
 
     // Create & Update
     public Book saveBook(Book book) {
@@ -52,6 +62,41 @@ public class BookServiceImpl {
             book = modelMapper.map(bookDTO, Book.class);
             Book savedBook = saveBook(book);
             return new ResponseTemplate<>("success", "Book successfully updated!", savedBook);
+        }
+        throw new CustomException("Book does not exist!", HttpStatus.NOT_FOUND);
+    }
+
+    public ResponseTemplate purchaseBook(PurchaseDTO purchaseDTO) {
+        Book book = findBookById(purchaseDTO.getBookId());
+        if (book != null) {
+            if (book.getQtyInStock() > 0) {
+                Payment payment = new Payment(book, book.getPrice(), purchaseDTO.getEmail(), purchaseDTO.getAddressLine1(), purchaseDTO.getCity());
+                Payment savedPayment = paymentService.savePayment(payment);
+
+                // Prepare Transaction
+                String narration = String.format("Purchase of book: %s", book.getTitle());
+                HashMap<String, Object> additionalData = new HashMap<>();
+                additionalData.put("bookId", book.getBookId());
+                additionalData.put("email", purchaseDTO.getEmail());
+                TransactionRequest transactionRequest = new TransactionRequest(TransactionType.PURCHASE, ExtendedType.NONE, book.getPrice(), new Card(purchaseDTO.getPan(), purchaseDTO.getExpiry()), savedPayment.getPaymentId().toString(), narration, additionalData);
+                TransactionResponse transactionResponse = paymentService.executeTransaction(transactionRequest);
+                if (transactionResponse.getResponseCode().equals("000")) {
+                    // Deduct from Stock
+                    // TODO research concurrency effects on persistence
+                    book.setQtyInStock(book.getQtyInStock() - 1);
+                    saveBook(book);
+                    savedPayment.setStatus(PaymentStatus.SUCCESS);
+                    savedPayment.setResponseCode(transactionResponse.getResponseCode());
+                    Payment updatedPayment = paymentService.savePayment(savedPayment);
+                    // TODO send email notification
+                    return new ResponseTemplate("success", "Purchase was successful", updatedPayment);
+                }
+
+                savedPayment.setStatus(PaymentStatus.FAILED);
+                paymentService.savePayment(savedPayment);
+                throw new CustomException(String.format("Payment was not successful! Use reference: %s for any queries", savedPayment.getPaymentId()), HttpStatus.EXPECTATION_FAILED);
+            }
+            throw new CustomException("Book is out of stock!", HttpStatus.EXPECTATION_FAILED);
         }
         throw new CustomException("Book does not exist!", HttpStatus.NOT_FOUND);
     }

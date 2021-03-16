@@ -1,12 +1,15 @@
 package zw.co.zss.interview.book;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import zw.co.zss.interview.category.Category;
+import zw.co.zss.interview.payment.Payment;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -43,6 +46,10 @@ public class Book {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "book")
+    private Set<Payment> payments;
 
     @CreationTimestamp
     private Date createdAt;
