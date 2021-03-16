@@ -14,6 +14,8 @@ import zw.co.zss.interview.payment.PaymentStatus;
 import zw.co.zss.interview.payment.dto.*;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 @Service
 public class BookServiceImpl {
@@ -64,6 +66,14 @@ public class BookServiceImpl {
             return new ResponseTemplate<>("success", "Book successfully updated!", savedBook);
         }
         throw new CustomException("Book does not exist!", HttpStatus.NOT_FOUND);
+    }
+
+    public ResponseTemplate<List<Book>> getBooks(long categoryId) {
+        List<Book> books = bookRepository.findAllByCategory_CategoryId(categoryId);
+        if (books.size() > 0) {
+            new ResponseTemplate<>("success", "Books Found!", books);
+        }
+        throw new CustomException("No books found in the category!", HttpStatus.NOT_FOUND);
     }
 
     public ResponseTemplate purchaseBook(PurchaseDTO purchaseDTO) {

@@ -12,6 +12,8 @@ import zw.co.zss.interview.book.dto.PurchaseDTO;
 import zw.co.zss.interview.common.ResponseTemplate;
 import zw.co.zss.interview.payment.Payment;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/book")
 @CrossOrigin(origins = "*")
@@ -31,6 +33,12 @@ public class BookController {
     @ApiOperation(value = "Updates new Book", response = ResponseTemplate.class)
     public ResponseTemplate<Book> updateBook(@ApiParam("UpdateAccountDTO") @RequestBody BookDTO bookDTO, @ApiParam("bookId") @PathVariable long bookId) {
         return bookService.updateBook(bookId, bookDTO);
+    }
+
+    @GetMapping(path = "/{categoryId}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @ApiOperation(value = "Books by Category", response = ResponseTemplate.class)
+    public ResponseTemplate<List<Book>> booksByCategory(@ApiParam("categoryId") @PathVariable long categoryId) {
+        return bookService.getBooks(categoryId);
     }
 
     @PostMapping(path = "/purchase", consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
