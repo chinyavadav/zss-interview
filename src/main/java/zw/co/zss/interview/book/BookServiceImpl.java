@@ -55,6 +55,10 @@ public class BookServiceImpl {
         return bookRepository.findByIsbn(isbn).orElse(null);
     }
 
+    public List<Book> findBooksByCategory(Category category) {
+        return bookRepository.findAllByCategory(category);
+    }
+
     // Delete
     public void deleteBook(Book book) {
         bookRepository.delete(book);
@@ -102,11 +106,15 @@ public class BookServiceImpl {
 
     // Fetches Books by Category
     public ResponseTemplate<List<Book>> getBooks(long categoryId) {
-        List<Book> books = bookRepository.findAllByCategory_CategoryId(categoryId);
-        if (books.size() > 0) {
-            new ResponseTemplate<>("success", "Books Found!", books);
+        Category category = categoryService.findCategoryById(categoryId);
+        if (category != null) {
+            List<Book> books = findBooksByCategory(category);
+            if (books.size() > 0) {
+                return new ResponseTemplate<>("success", "Books Found!", books);
+            }
+            throw new CustomException("No books found in the category!", HttpStatus.NOT_FOUND);
         }
-        throw new CustomException("No books found in the category!", HttpStatus.NOT_FOUND);
+        throw new CustomException("Category could not be found!", HttpStatus.NOT_FOUND);
     }
 
     // Validate ISBN

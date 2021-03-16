@@ -8,6 +8,7 @@ import zw.co.zss.interview.category.dto.CategoryDTO;
 import zw.co.zss.interview.common.ResponseTemplate;
 import zw.co.zss.interview.exception.CustomException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,10 @@ public class CategoryServiceImpl {
     // Read
     public Category findCategoryById(long categoryId) {
         return categoryRepository.findById(categoryId).orElse(null);
+    }
+
+    public List<Category> findAllCategoryById(long categoryId) {
+        return categoryRepository.findAllById(Collections.singleton(categoryId));
     }
 
     // Delete
