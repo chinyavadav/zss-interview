@@ -22,4 +22,5 @@ public class CategoryServiceImpl {
     public void deleteCategory(Category category) {
         categoryRepository.delete(category);
     }
+
 }

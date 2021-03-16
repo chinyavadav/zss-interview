@@ -2,7 +2,6 @@ package zw.co.zss.interview.book;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import zw.co.zss.interview.book.Book;
 
 @Service
 public class BookServiceImpl {
