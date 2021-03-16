@@ -41,7 +41,7 @@ public class BookController {
         return bookService.updateBook(bookId, bookDTO);
     }
 
-    @GetMapping(path = "/{categoryId}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(path = "/category/{categoryId}", produces = {MediaType.APPLICATION_JSON_VALUE})
     @ApiOperation(value = "Books by Category", response = ResponseTemplate.class)
     public ResponseTemplate<List<Book>> booksByCategory(@ApiParam("categoryId") @PathVariable long categoryId) {
         return bookService.getBooks(categoryId);
